@@ -8,7 +8,6 @@ export default defineNuxtConfig({
       PAYMENT: {
         NICE_PAY: {
           MID: process.env.NICE_PAY_MID,
-          MOID: process.env.NICE_PAY_MOID,
           MERCHANT_KEY: process.env.NICE_PAY_MERCHANT_KEY
         }
       }

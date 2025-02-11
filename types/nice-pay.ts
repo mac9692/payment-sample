@@ -1,4 +1,4 @@
-export interface nicePayRequestForGoPay {
+export interface nicePayGoPayRequest {
     goodsName: string
     amt: number
     mId: string
@@ -17,7 +17,7 @@ export interface nicePayRequestForGoPay {
     connWithIframe?: string
 }
 
-export interface nicePayResponseForGoPay {
+export interface nicePayGoPayResponse {
     authResultCode: string
     authResultMsg: string
     authToken: string
@@ -30,4 +30,34 @@ export interface nicePayResponseForGoPay {
     txTid: string
     nextAppURL: string
     netCancelURL: string
+}
+
+export interface nicePayApproveRequest {
+    TID: string,
+    AuthToken: string,
+    MID: string,
+    Amt: number,
+    EdiDate: string,
+    SignData: string,
+    CharSet?: string,
+    EdiType?: string,
+    MallReserved?: string
+}
+
+export interface nicePayApproveCommonResponse {
+    ResultCode?: string,
+    ResultMsg?: string,
+    Amt?: number,
+    MID?: string,
+    Moid?: string,
+    Signature?: string,
+    BuyerEmail?: string,
+    BuyerTel?: string,
+    BuyerName?: string,
+    GoodsName?: string,
+    TID?: string,
+    AuthCode?: string,
+    AuthDate?: string,
+    PayMethod?: string,
+    MallReserved?: string
 }

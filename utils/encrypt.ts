@@ -1,4 +1,4 @@
-export default async function encryptSHA256 (message: string) {
+export default async function encryptSHA256(message: string) {
     const encoder = new TextEncoder()
     const data = encoder.encode(message)
     const hashBuffer = await crypto.subtle.digest('SHA-256', data)
