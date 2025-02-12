@@ -3,6 +3,7 @@ import dayjs from "dayjs";
 import encryptSHA256 from "~/utils/encrypt";
 import type {nicePayGoPayRequest, nicePayGoPayResponse} from "~/types/nice-pay";
 import formDataToObject from "~/utils/common-util";
+import {API_ORDER, API_ORDER_PAYMENT, V1} from "~/utils/constants";
 
 useHead({
   script: [
@@ -38,7 +39,11 @@ encryptSHA256(payInfo.value.ediDate + payInfo.value.mId + payInfo.value.amt + me
 
 const formRef = ref<HTMLFormElement | null> (null)
 const paymentResponse = ref<nicePayGoPayResponse | null>(null)
-
+const approveNicePay = async (request) => {
+  console.log('request', request)
+  const response = useApi().post(API_ORDER + V1 + API_ORDER_PAYMENT + '/approveNicePay', request)
+  console.log('response', response)
+}
 const nicepaySubmit = () => {
   const returnObject = formDataToObject(formRef.value)
   console.log('nicepaySubmit', returnObject)
@@ -48,7 +53,8 @@ const nicepaySubmit = () => {
     authResultMsg: returnObject.AuthResultMsg,
     authToken: returnObject.AuthToken,
     payMethod: returnObject.PayMethod,
-    mID: returnObject.MID,
+    mid: returnObject.MID,
+    ediDate: returnObject.EdiDate,
     moid: returnObject.Moid,
     signature: returnObject.Signature,
     amt: returnObject.Amt,
@@ -57,6 +63,24 @@ const nicepaySubmit = () => {
     nextAppURL: returnObject.NextAppURL,
     netCancelURL: returnObject.NetCancelURL
   }
+
+  // paymentResponse.value = {
+  //   authResultCode: '0000',
+  //   authResultMsg: "인증 성공",
+  //   authToken: "NICETOKNABFE2C95D2BC739F2BC53ADF49E1CB7D",
+  //   payMethod: "CARD",
+  //   mid: "nicepay00m",
+  //   ediDate: payInfo.value.ediDate,
+  //   moid: "mnoid1234567890",
+  //   signature: "e6a4291f3fc848a95164ebc0deae2f641b565853036161edd63f1201b2349a6b",
+  //   amt: 30000,
+  //   reqReserved: '가맹점 여분 필드',
+  //   txTid: "nicepay00m01012502121529334718",
+  //   nextAppURL: "https://dc1-api.nicepay.co.kr/webapi/pay_process.jsp",
+  //   netCancelURL: "https://dc1-api.nicepay.co.kr/webapi/cancel_process.jsp"
+  // }
+
+  approveNicePay(paymentResponse.value)
 }
 const nicepayClose = () => {
   console.log('nicepayClose');
@@ -69,6 +93,7 @@ const submitForm = () => {
     window.goPay(formRef.value)
   }
 }
+
 </script>
 
 <template>
@@ -99,6 +124,7 @@ const submitForm = () => {
     <br/>
     <br/>
     <p>{{paymentResponse}}</p>
+    <button type="button" @click="nicepaySubmit">결제하기2</button>
   </div>
 </template>
 

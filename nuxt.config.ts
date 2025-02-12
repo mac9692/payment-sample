@@ -5,6 +5,7 @@ export default defineNuxtConfig({
   sourcemap: true,
   runtimeConfig: {
     public: {
+      API_URL: process.env.NUXT_PUBLIC_API_URL,
       PAYMENT: {
         NICE_PAY: {
           MID: process.env.NICE_PAY_MID,

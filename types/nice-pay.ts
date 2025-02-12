@@ -22,7 +22,8 @@ export interface nicePayGoPayResponse {
     authResultMsg: string
     authToken: string
     payMethod: string
-    mID: string
+    mid: string
+    ediDate: string
     moid: string
     signature: string
     amt: number
