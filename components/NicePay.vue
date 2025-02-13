@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import dayjs from "dayjs";
 import encryptSHA256 from "~/utils/encrypt";
-import type {nicePayGoPayRequest, nicePayGoPayResponse} from "~/types/nice-pay";
+import type {nicePayApproveCommonResponse, nicePayGoPayRequest, nicePayGoPayResponse} from "~/types/nice-pay";
 import formDataToObject from "~/utils/common-util";
 import {API_ORDER, API_ORDER_PAYMENT, V1} from "~/utils/constants";
+import {useNicePay} from "~/composables/payment/nice-pay";
 
 useHead({
   script: [
@@ -19,13 +20,13 @@ const config = useRuntimeConfig()
 
 const payInfo = ref<nicePayGoPayRequest>({
   goodsName: '테스트 상품',
-  amt: 30000,
+  amt: 100,
   mId: config.public.PAYMENT.NICE_PAY.MID,
   ediDate: dayjs().format('YYYYMMDDHHmmss'),
   moid: 'mnoid1234567890',
   signData: '',
   payMethod: 'CARD',
-  returnURL: 'http://localhost:3000/inicis',
+  returnURL: 'http://localhost:3000/ordersuccess',
   buyerName: '박진성',
   buyerTel: 36349692,
   reqReserved: '',
@@ -39,14 +40,29 @@ encryptSHA256(payInfo.value.ediDate + payInfo.value.mId + payInfo.value.amt + me
 
 const formRef = ref<HTMLFormElement | null> (null)
 const paymentResponse = ref<nicePayGoPayResponse | null>(null)
+const paymentApproveResponse = ref<nicePayApproveCommonResponse | null>(null)
+
 const approveNicePay = async (request) => {
-  console.log('request', request)
-  const response = useApi().post(API_ORDER + V1 + API_ORDER_PAYMENT + '/approveNicePay', request)
-  console.log('response', response)
+  const response = await useApi().post(API_ORDER + V1 + API_ORDER_PAYMENT + '/approveNicePay', request)
+  paymentApproveResponse.value = response?.payload
+
+  approveNicePayAfterProcess(paymentApproveResponse.value)
 }
+
+const approveNicePayAfterProcess = (approveResult: nicePayApproveCommonResponse) => {
+  if (!approveResult) {
+    return
+  }
+
+  if (useNicePay().isSuccessResult(approveResult.ResultCode)) {
+    useState("approveResult", () => approveResult);
+    navigateTo('/ordersuccess')
+  }
+}
+
 const nicepaySubmit = () => {
   const returnObject = formDataToObject(formRef.value)
-  console.log('nicepaySubmit', returnObject)
+
   window.deleteLayer()
   paymentResponse.value = {
     authResultCode: returnObject.AuthResultCode,
@@ -61,7 +77,8 @@ const nicepaySubmit = () => {
     reqReserved: '가맹점 여분 필드',
     txTid: returnObject.TxTid,
     nextAppURL: returnObject.NextAppURL,
-    netCancelURL: returnObject.NetCancelURL
+    netCancelURL: returnObject.NetCancelURL,
+    merchantKey: merchantKey
   }
 
   // paymentResponse.value = {
@@ -73,21 +90,19 @@ const nicepaySubmit = () => {
   //   ediDate: payInfo.value.ediDate,
   //   moid: "mnoid1234567890",
   //   signature: "e6a4291f3fc848a95164ebc0deae2f641b565853036161edd63f1201b2349a6b",
-  //   amt: 30000,
+  //   amt: 100,
   //   reqReserved: '가맹점 여분 필드',
   //   txTid: "nicepay00m01012502121529334718",
   //   nextAppURL: "https://dc1-api.nicepay.co.kr/webapi/pay_process.jsp",
-  //   netCancelURL: "https://dc1-api.nicepay.co.kr/webapi/cancel_process.jsp"
+  //   netCancelURL: "https://dc1-api.nicepay.co.kr/webapi/cancel_process.jsp",
+  // merchantKey: merchantKey
   // }
 
   approveNicePay(paymentResponse.value)
-}
-const nicepayClose = () => {
-  console.log('nicepayClose');
-}
+};
+const nicepayClose = () => console.log('nicepayClose')
 const submitForm = () => {
   if (formRef.value) {
-    console.log('submit', formRef.value)
     window.nicepaySubmit = nicepaySubmit
     window.nicepayClose = nicepayClose
     window.goPay(formRef.value)
@@ -121,10 +136,18 @@ const submitForm = () => {
       GoodsCl : <input type="text" name="GoodsCl" :value="payInfo.goodsCl" /><br/>
       <button type="submit">결제하기</button>
     </form>
-    <br/>
-    <br/>
-    <p>{{paymentResponse}}</p>
-    <button type="button" @click="nicepaySubmit">결제하기2</button>
+    <div v-if="paymentResponse">
+      <br/>
+      <br/>
+      <h1>인증창 반환값</h1>
+      <p>{{ paymentResponse }}</p>
+    </div>
+    <div v-if="paymentApproveResponse">
+      <br/>
+      <br/>
+      <h1>승인 요청 반환값</h1>
+      <p>{{ paymentApproveResponse }}</p>
+    </div>
   </div>
 </template>
 

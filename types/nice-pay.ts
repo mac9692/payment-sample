@@ -46,10 +46,10 @@ export interface nicePayApproveRequest {
 }
 
 export interface nicePayApproveCommonResponse {
-    ResultCode?: string,
-    ResultMsg?: string,
-    Amt?: number,
+    ResultCode: string,
+    ResultMsg: string,
     MID?: string,
+    Amt?: number,
     Moid?: string,
     Signature?: string,
     BuyerEmail?: string,

@@ -3,7 +3,7 @@
 
 <template>
   <div>
-    <NicePay />
+    <p>NicePayWithWindowOpen Sample</p>
   </div>
 </template>
 
