@@ -1,42 +1,19 @@
 <script setup lang="ts">
-import dayjs from "dayjs";
-import encryptSHA256 from "~/utils/encrypt";
-import type {nicePayApproveCommonResponse, nicePayGoPayRequest, nicePayGoPayResponse} from "~/types/nice-pay";
+import type {nicePayApproveCommonResponse, nicePayGoPayResponse} from "~/types/nice-pay";
 import formDataToObject from "~/utils/common-util";
 import {API_ORDER, API_ORDER_PAYMENT, V1} from "~/utils/constants";
 import {useNicePay} from "~/composables/payment/nice-pay";
 
+defineProps({
+  payInfo: {
+    type: Object,
+    required: true
+  }
+})
+
 useHead({
-  script: [
-    {
-      src: 'https://pg-web.nicepay.co.kr/v3/common/js/nicepay-pgweb.js',
-      type: 'text/javascript',
-      async: true,
-    }
-  ]
+  script: [useNicePay().getNicePayPlugin()]
 })
-
-const config = useRuntimeConfig()
-
-const payInfo = ref<nicePayGoPayRequest>({
-  goodsName: '테스트 상품',
-  amt: 100,
-  mId: config.public.PAYMENT.NICE_PAY.MID,
-  ediDate: dayjs().format('YYYYMMDDHHmmss'),
-  moid: 'mnoid1234567890',
-  signData: '',
-  payMethod: 'CARD',
-  returnURL: 'http://localhost:3000/ordersuccess',
-  buyerName: '박진성',
-  buyerTel: 36349692,
-  reqReserved: '',
-  buyerEmail: 'mac9692@nate.com',
-  charSet: 'utf-8',
-  goodsCl: '1'
-})
-
-const merchantKey = config.public.PAYMENT.NICE_PAY.MERCHANT_KEY
-encryptSHA256(payInfo.value.ediDate + payInfo.value.mId + payInfo.value.amt + merchantKey).then((value) => payInfo.value.signData = value)
 
 const formRef = ref<HTMLFormElement | null> (null)
 const paymentResponse = ref<nicePayGoPayResponse | null>(null)
@@ -55,7 +32,8 @@ const approveNicePayAfterProcess = (approveResult: nicePayApproveCommonResponse)
   }
 
   if (useNicePay().isSuccessResult(approveResult.ResultCode)) {
-    useState("approveResult", () => approveResult);
+    const approveResultForOrderSuccess = useState("approveResult", () => approveResult);
+    console.log('approveResultForOrderSuccess', approveResultForOrderSuccess)
     navigateTo('/ordersuccess')
   }
 }
@@ -78,25 +56,8 @@ const nicepaySubmit = () => {
     txTid: returnObject.TxTid,
     nextAppURL: returnObject.NextAppURL,
     netCancelURL: returnObject.NetCancelURL,
-    merchantKey: merchantKey
+    merchantKey: payInfo.value.merchantKey
   }
-
-  // paymentResponse.value = {
-  //   authResultCode: '0000',
-  //   authResultMsg: "인증 성공",
-  //   authToken: "NICETOKNABFE2C95D2BC739F2BC53ADF49E1CB7D",
-  //   payMethod: "CARD",
-  //   mid: "nicepay00m",
-  //   ediDate: payInfo.value.ediDate,
-  //   moid: "mnoid1234567890",
-  //   signature: "e6a4291f3fc848a95164ebc0deae2f641b565853036161edd63f1201b2349a6b",
-  //   amt: 100,
-  //   reqReserved: '가맹점 여분 필드',
-  //   txTid: "nicepay00m01012502121529334718",
-  //   nextAppURL: "https://dc1-api.nicepay.co.kr/webapi/pay_process.jsp",
-  //   netCancelURL: "https://dc1-api.nicepay.co.kr/webapi/cancel_process.jsp",
-  // merchantKey: merchantKey
-  // }
 
   approveNicePay(paymentResponse.value)
 };
@@ -108,6 +69,21 @@ const submitForm = () => {
     window.goPay(formRef.value)
   }
 }
+
+const openPopup = () => {
+  const popup = window.open(
+      "/nicepay/windowopen",
+      "PopupWindow",
+      "width=600,height=400,left=100,top=100"
+  );
+
+  setTimeout(() => {
+    if (popup) {
+      popup.postMessage({ message: formDataToObject(formRef.value) }, window.location.origin);
+    }
+  }, 1000);
+}
+
 
 </script>
 
@@ -127,7 +103,7 @@ const submitForm = () => {
       EdiDate : <input type="text" name="EdiDate" :value="payInfo.ediDate" /><br/>
       Moid : <input type="text" name="Moid" :value="payInfo.moid" /><br/>
       PayMethod : <input type="text" name="PayMethod" :value="payInfo.payMethod" /><br/>
-      MerchantKey : <input type="text" name="MerchantKey" :value="merchantKey" /><br/>
+      MerchantKey : <input type="text" name="MerchantKey" :value="payInfo.merchantKey" /><br/>
       SignData : <input type="text" name="SignData" :value="payInfo.signData" /><br/>
       BuyerName : <input type="text" name="BuyerName" :value="payInfo.buyerName" /><br/>
       BuyerTel : <input type="text" name="BuyerTel" :value="payInfo.buyerTel" /><br/>
@@ -136,6 +112,7 @@ const submitForm = () => {
       GoodsCl : <input type="text" name="GoodsCl" :value="payInfo.goodsCl" /><br/>
       <button type="submit">결제하기</button>
     </form>
+    <button @click="openPopup">결제하기(새창)</button>
     <div v-if="paymentResponse">
       <br/>
       <br/>

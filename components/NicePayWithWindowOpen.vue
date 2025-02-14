@@ -1,4 +1,11 @@
-<script lang="ts">
+<script setup lang="ts">
+defineProps({
+  payInfo: {
+    type: Object,
+    required: true
+  }
+})
+
 </script>
 
 <template>

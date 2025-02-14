@@ -1,11 +1,10 @@
-<script lang="ts">
+<script setup lang="ts">
 const approveResult = useState("approveResult")
-console.log(approveResult.value)
 </script>
 
 <template>
   <div>
-    <OrderSuccess />
+    <OrderSuccess :order-success-info='approveResult'/>
   </div>
 </template>
 
